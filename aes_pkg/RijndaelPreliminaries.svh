@@ -107,12 +107,14 @@ virtual class RijndaelPreliminaries extends LogBase;
             2 6 a e         a e 2 6
             3 7 b f         f 3 7 b
         };              };     */
-        st = {
+        bit [7:0] tmp[];
+        tmp = {
             st['h0], st['h5], st['ha], st['hf],
             st['h4], st['h9], st['he], st['h3],
             st['h8], st['hd], st['h2], st['h7],
             st['hc], st['h1], st['h6], st['hb]
         };
+        st = tmp;
     endfunction
 
     static protected function void invShiftRows (ref bit[7:0] st[]);
@@ -123,37 +125,43 @@ virtual class RijndaelPreliminaries extends LogBase;
             2 6 a e                 a e 2 6 
             3 7 b f                 7 b f 3 
         };                      }; */
-        st = {
+        bit [7:0] tmp[];
+        tmp = {
             st['h0], st['hd], st['ha], st['h7],
             st['h4], st['h1], st['he], st['hb],
             st['h8], st['h5], st['h2], st['hf],
             st['hc], st['h9], st['h6], st['h3]
         };
+        st = tmp;
     endfunction
 
     static protected function void mixColumns (ref bit[7:0] st[]);
+        bit [7:0] tmp[0:3];
         for (int c = 0; c < 4; c++) begin
-            {st[c*4+0], st[c*4+1], st[c*4+2], st[c*4+3]} = 
-                {
-                    GF8Mult(2, st[c*4+0])^GF8Mult(3, st[c*4+1])^st[c*4+2]^st[c*4+3],
-                    st[c*4+0]^GF8Mult(2, st[c*4+1])^GF8Mult(3, st[c*4+2])^st[c*4+3],
-                    st[c*4+0]^st[c*4+1]^GF8Mult(2, st[c*4+2])^GF8Mult(3, st[c*4+3]),
-                    GF8Mult(3, st[c*4+0])^st[c*4+1]^st[c*4+2]^GF8Mult(2, st[c*4+3])
-                };
+            tmp[0] = GF8Mult(2, st[c*4+0])^GF8Mult(3, st[c*4+1])^st[c*4+2]^st[c*4+3];
+            tmp[1] = st[c*4+0]^GF8Mult(2, st[c*4+1])^GF8Mult(3, st[c*4+2])^st[c*4+3];
+            tmp[2] = st[c*4+0]^st[c*4+1]^GF8Mult(2, st[c*4+2])^GF8Mult(3, st[c*4+3]);
+            tmp[3] = GF8Mult(3, st[c*4+0])^st[c*4+1]^st[c*4+2]^GF8Mult(2, st[c*4+3]);
+            st[c*4+0] = tmp[0];
+            st[c*4+1] = tmp[1];
+            st[c*4+2] = tmp[2];
+            st[c*4+3] = tmp[3];
         end
     endfunction
 
     static protected function void invMixColumns (ref bit[7:0] st[]);
     `define __mix(c0, c1, c2, c3) \
         GF8Mult(c0, st[c*4+0])^GF8Mult(c1, st[c*4+1])^GF8Mult(c2, st[c*4+2])^GF8Mult(c3, st[c*4+3])
+        bit [7:0] tmp[0:3];
         for (int c = 0; c < 4; c++) begin
-            {st[c*4+0], st[c*4+1], st[c*4+2], st[c*4+3]} = 
-                {
-                    `__mix(8'h0e, 8'h0b, 8'h0d, 8'h09),
-                    `__mix(8'h09, 8'h0e, 8'h0b, 8'h0d),
-                    `__mix(8'h0d, 8'h09, 8'h0e, 8'h0b),
-                    `__mix(8'h0b, 8'h0d, 8'h09, 8'h0e)
-                };
+            tmp[0] = `__mix(8'h0e, 8'h0b, 8'h0d, 8'h09);
+            tmp[1] = `__mix(8'h09, 8'h0e, 8'h0b, 8'h0d);
+            tmp[2] = `__mix(8'h0d, 8'h09, 8'h0e, 8'h0b);
+            tmp[3] = `__mix(8'h0b, 8'h0d, 8'h09, 8'h0e);
+            st[c*4+0] = tmp[0];
+            st[c*4+1] = tmp[1];
+            st[c*4+2] = tmp[2];
+            st[c*4+3] = tmp[3];
         end
     endfunction
 
